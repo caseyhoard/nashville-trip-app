@@ -1,0 +1,151 @@
+{
+  "tripName": "Nashville Spring Break",
+  "subtitle": "Quick agenda, swap ideas, and nearby pivots for just the two of us.",
+  "notes": [
+    "Use this app as the lightweight command center for the trip.",
+    "When the sheet is ready, replace the sample feeds with your published Google Sheets CSV tabs.",
+    "Each agenda item supports fast map and review links so you can pivot on the fly."
+  ],
+  "days": [
+    {
+      "id": "thu-mar-28",
+      "label": "Thu",
+      "date": "2026-04-02",
+      "summary": "Arrival, check-in, and first-night options downtown.",
+      "agenda": [
+        {
+          "time": "3:00 PM",
+          "title": "Hotel check-in",
+          "category": "Stay",
+          "area": "Downtown",
+          "placeName": "Downtown hotel",
+          "notes": "Drop bags, recharge phones, and sanity-check tonight's plan.",
+          "reviewQuery": "best downtown nashville hotels reviews",
+          "directionsQuery": "Downtown Nashville hotels"
+        },
+        {
+          "time": "6:30 PM",
+          "title": "Dinner reservation",
+          "category": "Food",
+          "area": "The Gulch",
+          "placeName": "Dinner spot",
+          "notes": "Primary dinner target. Keep one backup nearby in case timing slips.",
+          "reviewQuery": "The Gulch Nashville restaurants reviews",
+          "directionsQuery": "The Gulch Nashville restaurants"
+        },
+        {
+          "time": "8:30 PM",
+          "title": "Broadway walk",
+          "category": "Explore",
+          "area": "Broadway",
+          "placeName": "Broadway Nashville",
+          "notes": "Good flexible block if you want music, bars, or just people-watching.",
+          "reviewQuery": "Broadway Nashville live music reviews",
+          "directionsQuery": "Broadway Nashville"
+        }
+      ],
+      "swaps": [
+        {
+          "title": "Rooftop drinks instead of Broadway",
+          "category": "Swap",
+          "area": "Downtown",
+          "notes": "A quieter pivot if the strip feels too chaotic.",
+          "reviewQuery": "best rooftop bars downtown nashville reviews",
+          "directionsQuery": "rooftop bars downtown Nashville"
+        },
+        {
+          "title": "Casual hot chicken backup",
+          "category": "Food",
+          "area": "The Gulch",
+          "notes": "Useful if the dinner reservation runs late or you want something faster.",
+          "reviewQuery": "hot chicken gulch nashville reviews",
+          "directionsQuery": "hot chicken the gulch nashville"
+        }
+      ],
+      "nearby": [
+        {
+          "title": "Coffee nearby",
+          "category": "Nearby",
+          "area": "Downtown",
+          "notes": "Quick reset option before heading back out.",
+          "reviewQuery": "coffee downtown nashville reviews",
+          "directionsQuery": "coffee downtown Nashville"
+        },
+        {
+          "title": "Dessert nearby",
+          "category": "Nearby",
+          "area": "The Gulch",
+          "notes": "Easy walkable add-on after dinner.",
+          "reviewQuery": "dessert the gulch nashville reviews",
+          "directionsQuery": "dessert the gulch Nashville"
+        }
+      ]
+    },
+    {
+      "id": "fri-mar-29",
+      "label": "Fri",
+      "date": "2026-04-03",
+      "summary": "Daytime exploring with room for flexible swaps.",
+      "agenda": [
+        {
+          "time": "9:00 AM",
+          "title": "Breakfast run",
+          "category": "Food",
+          "area": "12 South",
+          "placeName": "Breakfast spot",
+          "notes": "Good morning anchor before neighborhood exploring.",
+          "reviewQuery": "12 South Nashville breakfast reviews",
+          "directionsQuery": "12 South Nashville breakfast"
+        },
+        {
+          "time": "11:00 AM",
+          "title": "Neighborhood browse",
+          "category": "Explore",
+          "area": "12 South",
+          "placeName": "12 South Nashville",
+          "notes": "Shops, murals, and easy wandering.",
+          "reviewQuery": "12 South Nashville attractions reviews",
+          "directionsQuery": "12 South Nashville"
+        },
+        {
+          "time": "2:00 PM",
+          "title": "Open flex block",
+          "category": "Flex",
+          "area": "Anywhere",
+          "placeName": "Nashville",
+          "notes": "Use this slot for museums, rest, drinks, or a weather pivot.",
+          "reviewQuery": "best afternoon things to do in Nashville reviews",
+          "directionsQuery": "things to do Nashville"
+        }
+      ],
+      "swaps": [
+        {
+          "title": "Museum pivot",
+          "category": "Swap",
+          "area": "Downtown",
+          "notes": "Good rainy-day replacement for outdoor walking.",
+          "reviewQuery": "best museums downtown nashville reviews",
+          "directionsQuery": "museums downtown Nashville"
+        },
+        {
+          "title": "Spa or nap window",
+          "category": "Recovery",
+          "area": "Hotel",
+          "notes": "Keeps the rest of the day fun if energy dips.",
+          "reviewQuery": "day spa nashville reviews",
+          "directionsQuery": "day spa Nashville"
+        }
+      ],
+      "nearby": [
+        {
+          "title": "Cocktail bars nearby",
+          "category": "Nearby",
+          "area": "12 South",
+          "notes": "Good handoff from daytime wandering into evening.",
+          "reviewQuery": "12 South Nashville cocktail bar reviews",
+          "directionsQuery": "cocktail bars 12 South Nashville"
+        }
+      ]
+    }
+  ]
+}

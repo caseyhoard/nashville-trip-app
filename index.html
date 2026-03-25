@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f2efe8" />
+    <meta
+      name="description"
+      content="A phone-first Nashville spring break agenda with swaps, maps, and quick place links."
+    />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='18' fill='%23c45e37'/%3E%3Cpath d='M16 45V19h7l16 15V19h9v26h-7L25 30v15z' fill='%23fff8f0'/%3E%3C/svg%3E"
+    />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="stylesheet" href="./styles.css" />
+    <title>Nashville Spring Break</title>
+  </head>
+  <body>
+    <div class="grain"></div>
+    <div class="poster-glow poster-glow-left"></div>
+    <div class="poster-glow poster-glow-right"></div>
+    <main class="shell">
+      <header class="hero">
+        <p class="eyebrow">Music City HQ</p>
+        <div class="hero-top">
+          <div class="hero-copy-wrap">
+            <h1>Nashville Trip</h1>
+            <p id="trip-subtitle" class="hero-copy">Agenda, pivots, and nearby options in one place.</p>
+            <div class="hero-stamps">
+              <span class="stamp">12 South</span>
+              <span class="stamp">Broadway</span>
+              <span class="stamp">Franklin</span>
+            </div>
+          </div>
+          <button id="refresh-button" class="ghost-button" type="button">Refresh</button>
+        </div>
+        <section class="status-bar">
+          <div>
+            <span class="status-label">Data source</span>
+            <strong id="data-source">Loading...</strong>
+          </div>
+          <div>
+            <span class="status-label">Last update</span>
+            <strong id="last-updated">Checking...</strong>
+          </div>
+        </section>
+      </header>
+
+      <nav class="day-nav" id="day-nav" aria-label="Trip days"></nav>
+
+      <section class="launcher-row">
+        <a id="open-swaps" class="launcher-card" href="#" target="_blank" rel="noreferrer">
+          <span class="launcher-kicker">Flexible</span>
+          <strong>Easy pivots</strong>
+          <span id="swaps-preview" class="launcher-copy">Backup options tuned to today's neighborhoods.</span>
+        </a>
+        <a id="open-nearby" class="launcher-card secondary" href="#" target="_blank" rel="noreferrer">
+          <span class="launcher-kicker">Close by</span>
+          <strong>What is close</strong>
+          <span id="nearby-preview" class="launcher-copy">Quick spots near your current plan.</span>
+        </a>
+      </section>
+
+      <section class="panel current-panel">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">Current focus</p>
+            <h2 id="day-title">Trip day</h2>
+          </div>
+          <p id="day-summary" class="muted">Loading agenda...</p>
+        </div>
+        <div id="current-agenda" class="agenda-list"></div>
+      </section>
+
+      <section class="panel notes-panel">
+        <div class="panel-heading compact">
+          <div>
+            <p class="eyebrow">Notes</p>
+            <h2>Trip context</h2>
+          </div>
+        </div>
+        <div id="trip-notes" class="notes-content"></div>
+      </section>
+    </main>
+
+    <template id="agenda-card-template">
+      <article class="agenda-card">
+        <div class="agenda-time"></div>
+        <div class="agenda-body">
+          <div class="agenda-title-row">
+            <h3></h3>
+            <span class="badge"></span>
+          </div>
+          <p class="agenda-meta"></p>
+          <p class="agenda-notes"></p>
+          <div class="action-row"></div>
+        </div>
+      </article>
+    </template>
+
+    <template id="stack-item-template">
+      <article class="stack-item">
+        <div class="stack-top">
+          <h3></h3>
+          <span class="badge"></span>
+        </div>
+        <p class="stack-meta"></p>
+        <p class="stack-notes"></p>
+        <div class="action-row"></div>
+      </article>
+    </template>
+
+    <script type="module" src="./src/app.js"></script>
+  </body>
+</html>

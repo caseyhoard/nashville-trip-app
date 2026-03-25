@@ -1,0 +1,10 @@
+{
+  "name": "Nashville Spring Break",
+  "short_name": "Nashville",
+  "description": "Phone-first Nashville trip dashboard with agenda, swaps, and quick map links.",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f2efe8",
+  "theme_color": "#f2efe8",
+  "icons": []
+}

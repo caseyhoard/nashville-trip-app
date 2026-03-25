@@ -1,0 +1,16 @@
+{
+  "tripName": "Nashville Spring Break",
+  "subtitle": "Published Google Sheets CSV feeds plug in here.",
+  "itineraryCsvUrl": "https://docs.google.com/spreadsheets/d/e/YOUR_PUBLISHED_SHEET/pub?gid=ITINERARY_GID&single=true&output=csv",
+  "matrixCsvUrl": "https://docs.google.com/spreadsheets/d/e/YOUR_PUBLISHED_SHEET/pub?output=csv",
+  "agendaCsvUrl": "https://docs.google.com/spreadsheets/d/YOUR_SHEET_ID/export?format=csv&gid=AGENDA_GID",
+  "swapsCsvUrl": "https://docs.google.com/spreadsheets/d/YOUR_SHEET_ID/export?format=csv&gid=SWAPS_GID",
+  "nearbyCsvUrl": "https://docs.google.com/spreadsheets/d/YOUR_SHEET_ID/export?format=csv&gid=NEARBY_GID",
+  "notes": [
+    "If you have a real itinerary tab, prefer itineraryCsvUrl for the agenda.",
+    "If you have one planning matrix tab instead of clean feeds, use matrixCsvUrl by itself.",
+    "Required agenda columns: dayId,label,date,time,title,category,area,placeName,notes,reviewQuery,directionsQuery",
+    "Required swap and nearby columns: dayId,title,category,area,notes,reviewQuery,directionsQuery",
+    "Copy this file to sheet-config.json when your feeds are ready."
+  ]
+}
