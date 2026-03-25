@@ -177,6 +177,14 @@ h3 {
   font-size: 0.76rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+  color: #fff8ef;
+  cursor: pointer;
+}
+
+.stamp.is-active {
+  background: rgba(255, 244, 229, 0.94);
+  color: var(--poster-red);
+  border-color: rgba(255, 244, 229, 0.94);
 }
 
 .ghost-button,
@@ -260,6 +268,7 @@ h3 {
   box-shadow: var(--shadow);
   text-align: left;
   text-decoration: none;
+  border: none;
 }
 
 .launcher-card.secondary {
@@ -386,6 +395,65 @@ h3 {
 .notes-content ul {
   margin: 0;
   padding-left: 18px;
+}
+
+.option-sheet[hidden] {
+  display: none;
+}
+
+.option-sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+}
+
+.sheet-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(24, 15, 11, 0.42);
+  backdrop-filter: blur(8px);
+}
+
+.sheet-panel {
+  position: absolute;
+  right: 0;
+  left: 0;
+  bottom: 0;
+  max-height: min(78vh, 760px);
+  padding: 14px 18px 28px;
+  border-radius: 28px 28px 0 0;
+  background: linear-gradient(180deg, rgba(255, 248, 236, 0.98), rgba(249, 240, 225, 0.98));
+  box-shadow: 0 -14px 42px rgba(33, 19, 12, 0.2);
+  overflow: auto;
+}
+
+.sheet-handle {
+  width: 54px;
+  height: 5px;
+  margin: 0 auto 16px;
+  border-radius: 999px;
+  background: rgba(82, 58, 43, 0.24);
+}
+
+.sheet-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.sheet-close {
+  color: var(--text);
+  background: rgba(34, 27, 24, 0.06);
+  border: 1px solid rgba(34, 27, 24, 0.08);
+}
+
+.sheet-description {
+  margin-top: 8px;
+}
+
+.sheet-list {
+  margin-top: 16px;
 }
 
 @media (max-width: 780px) {

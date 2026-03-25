@@ -27,11 +27,7 @@
           <div class="hero-copy-wrap">
             <h1>Nashville Trip</h1>
             <p id="trip-subtitle" class="hero-copy">Agenda, pivots, and nearby options in one place.</p>
-            <div class="hero-stamps">
-              <span class="stamp">12 South</span>
-              <span class="stamp">Broadway</span>
-              <span class="stamp">Franklin</span>
-            </div>
+            <div id="hero-stamps" class="hero-stamps"></div>
           </div>
           <button id="refresh-button" class="ghost-button" type="button">Refresh</button>
         </div>
@@ -50,16 +46,16 @@
       <nav class="day-nav" id="day-nav" aria-label="Trip days"></nav>
 
       <section class="launcher-row">
-        <a id="open-swaps" class="launcher-card" href="#" target="_blank" rel="noreferrer">
+        <button id="open-swaps" class="launcher-card" type="button">
           <span class="launcher-kicker">Flexible</span>
           <strong>Easy pivots</strong>
           <span id="swaps-preview" class="launcher-copy">Backup options tuned to today's neighborhoods.</span>
-        </a>
-        <a id="open-nearby" class="launcher-card secondary" href="#" target="_blank" rel="noreferrer">
+        </button>
+        <button id="open-nearby" class="launcher-card secondary" type="button">
           <span class="launcher-kicker">Close by</span>
           <strong>What is close</strong>
           <span id="nearby-preview" class="launcher-copy">Quick spots near your current plan.</span>
-        </a>
+        </button>
       </section>
 
       <section class="panel current-panel">
@@ -83,6 +79,22 @@
         <div id="trip-notes" class="notes-content"></div>
       </section>
     </main>
+
+    <section id="option-sheet" class="option-sheet" hidden aria-hidden="true">
+      <div id="sheet-backdrop" class="sheet-backdrop"></div>
+      <div class="sheet-panel" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+        <div class="sheet-handle"></div>
+        <div class="sheet-header">
+          <div>
+            <p id="sheet-kicker" class="eyebrow">Flexible</p>
+            <h2 id="sheet-title">Easy pivots</h2>
+          </div>
+          <button id="close-sheet" class="ghost-button sheet-close" type="button">Close</button>
+        </div>
+        <p id="sheet-description" class="muted sheet-description">Options for the current day.</p>
+        <div id="sheet-list" class="stack-list sheet-list"></div>
+      </div>
+    </section>
 
     <template id="agenda-card-template">
       <article class="agenda-card">
@@ -109,6 +121,10 @@
         <p class="stack-notes"></p>
         <div class="action-row"></div>
       </article>
+    </template>
+
+    <template id="stamp-template">
+      <button class="stamp" type="button"></button>
     </template>
 
     <script type="module" src="./src/app.js"></script>

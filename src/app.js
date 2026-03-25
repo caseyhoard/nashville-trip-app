@@ -8,21 +8,32 @@ const els = {
   currentAgenda: document.querySelector("#current-agenda"),
   tripNotes: document.querySelector("#trip-notes"),
   refreshButton: document.querySelector("#refresh-button"),
+  heroStamps: document.querySelector("#hero-stamps"),
   openSwaps: document.querySelector("#open-swaps"),
   openNearby: document.querySelector("#open-nearby"),
   swapsPreview: document.querySelector("#swaps-preview"),
-  nearbyPreview: document.querySelector("#nearby-preview")
+  nearbyPreview: document.querySelector("#nearby-preview"),
+  optionSheet: document.querySelector("#option-sheet"),
+  sheetBackdrop: document.querySelector("#sheet-backdrop"),
+  closeSheet: document.querySelector("#close-sheet"),
+  sheetKicker: document.querySelector("#sheet-kicker"),
+  sheetTitle: document.querySelector("#sheet-title"),
+  sheetDescription: document.querySelector("#sheet-description"),
+  sheetList: document.querySelector("#sheet-list")
 };
 
 const templates = {
   agenda: document.querySelector("#agenda-card-template"),
-  stack: document.querySelector("#stack-item-template")
+  stack: document.querySelector("#stack-item-template"),
+  stamp: document.querySelector("#stamp-template")
 };
 
 const state = {
   trip: null,
   selectedDayId: null,
-  sourceLabel: "Loading..."
+  sourceLabel: "Loading...",
+  activeSheetMode: null,
+  areaFilter: null
 };
 
 boot().catch((error) => {
@@ -47,6 +58,11 @@ function attachEvents() {
     state.trip = await loadTripData({ bustCache: true });
     render();
   });
+
+  els.openSwaps.addEventListener("click", () => openOptionSheet("swaps"));
+  els.openNearby.addEventListener("click", () => openOptionSheet("nearby"));
+  els.closeSheet.addEventListener("click", closeOptionSheet);
+  els.sheetBackdrop.addEventListener("click", closeOptionSheet);
 }
 
 async function loadTripData({ bustCache = false } = {}) {
@@ -664,8 +680,13 @@ function render() {
   els.dayTitle.textContent = formatDayHeading(day);
   els.daySummary.textContent = day.summary || "No summary yet.";
   renderAgenda(day.agenda);
+  renderStamps(day);
   renderLaunchers(day);
   renderNotes(state.trip.notes);
+
+  if (state.activeSheetMode) {
+    renderOptionSheet(day, state.activeSheetMode);
+  }
 }
 
 function renderDayNav() {
@@ -678,6 +699,7 @@ function renderDayNav() {
     button.textContent = `${day.label} ${shortDate(day.date)}`;
     button.addEventListener("click", () => {
       state.selectedDayId = day.id;
+      state.areaFilter = null;
       render();
     });
     els.dayNav.append(button);
@@ -706,23 +728,23 @@ function renderAgenda(items) {
 
 function renderLaunchers(day) {
   const neighborhoods = getNeighborhoodFocus(day);
-  const primaryArea = neighborhoods[0] || "Nashville";
-  const secondaryArea = neighborhoods[1] || primaryArea;
+  const primaryArea = state.areaFilter || neighborhoods[0] || "Nashville";
+  const secondaryArea = state.areaFilter || neighborhoods[1] || primaryArea;
 
-  els.openSwaps.href = buildNeighborhoodLink(primaryArea, "food drink pivots");
-  els.openNearby.href = buildNeighborhoodLink(secondaryArea, "things to do nearby");
   els.openSwaps.setAttribute("aria-label", `Open easy pivots for ${primaryArea}`);
   els.openNearby.setAttribute("aria-label", `Open nearby ideas for ${secondaryArea}`);
-  els.swapsPreview.textContent = buildLauncherDescription(primaryArea, "pivots");
-  els.nearbyPreview.textContent = buildLauncherDescription(secondaryArea, "nearby");
+  els.swapsPreview.textContent = buildLauncherDescription(primaryArea, "pivots", getFilteredOptions(day, "swaps"));
+  els.nearbyPreview.textContent = buildLauncherDescription(secondaryArea, "nearby", getFilteredOptions(day, "nearby"));
 }
 
-function buildLauncherDescription(area, mode) {
+function buildLauncherDescription(area, mode, items) {
+  const sample = items.slice(0, 2).map((item) => item.title).join(" • ");
+
   if (mode === "pivots") {
-    return `Open backup food, drinks, and flexible stops around ${area}.`;
+    return sample || `Open backup food, drinks, and flexible stops around ${area}.`;
   }
 
-  return `Open nearby things to do, shops, and quick stops around ${area}.`;
+  return sample || `Open nearby things to do, shops, and quick stops around ${area}.`;
 }
 
 function getNeighborhoodFocus(day) {
@@ -737,21 +759,6 @@ function getNeighborhoodFocus(day) {
   }
 
   return sortedAreas.slice(0, 2);
-}
-
-function buildNeighborhoodLink(area, intent) {
-  const areaQueries = {
-    "12 South": "12 South Nashville",
-    "The Gulch": "The Gulch Nashville",
-    Downtown: "Downtown Nashville",
-    Broadway: "Broadway Nashville",
-    Germantown: "Germantown Nashville",
-    Franklin: "Franklin TN",
-    Louisville: "Whiskey Row Louisville KY",
-    "East Nashville": "East Nashville"
-  };
-  const place = areaQueries[area] || "Nashville";
-  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${intent} ${place}`)}`;
 }
 
 function buildActions(target, item) {
@@ -798,6 +805,92 @@ function renderNotes(notes) {
 
   els.tripNotes.innerHTML = "";
   els.tripNotes.append(list);
+}
+
+function renderStamps(day) {
+  const areas = getNeighborhoodFocus(day);
+  els.heroStamps.innerHTML = "";
+
+  for (const area of areas) {
+    const button = templates.stamp.content.firstElementChild.cloneNode(true);
+    button.textContent = area;
+    button.className = `stamp${state.areaFilter === area ? " is-active" : ""}`;
+    button.addEventListener("click", () => {
+      state.areaFilter = state.areaFilter === area ? null : area;
+      render();
+    });
+    els.heroStamps.append(button);
+  }
+}
+
+function getFilteredOptions(day, key) {
+  const items = day[key] || [];
+  if (!state.areaFilter) {
+    return items;
+  }
+
+  const exact = items.filter((item) => item.area === state.areaFilter);
+  if (exact.length) {
+    return exact;
+  }
+
+  return items;
+}
+
+function renderStack(items, target) {
+  target.innerHTML = "";
+
+  if (!items.length) {
+    target.innerHTML = "<p class=\"muted\">No options loaded yet.</p>";
+    return;
+  }
+
+  for (const item of items) {
+    const node = templates.stack.content.firstElementChild.cloneNode(true);
+    node.querySelector("h3").textContent = item.title;
+    node.querySelector(".badge").textContent = item.category || "Option";
+    node.querySelector(".stack-meta").textContent = item.area || "Nashville";
+    node.querySelector(".stack-notes").textContent = item.notes || "No notes yet.";
+    buildActions(node.querySelector(".action-row"), item);
+    target.append(node);
+  }
+}
+
+function openOptionSheet(mode) {
+  state.activeSheetMode = mode;
+  const day = state.trip.days.find((entry) => entry.id === state.selectedDayId) || state.trip.days[0];
+  renderOptionSheet(day, mode);
+  els.optionSheet.hidden = false;
+  els.optionSheet.setAttribute("aria-hidden", "false");
+}
+
+function closeOptionSheet() {
+  state.activeSheetMode = null;
+  els.optionSheet.hidden = true;
+  els.optionSheet.setAttribute("aria-hidden", "true");
+}
+
+function renderOptionSheet(day, mode) {
+  const focusArea = state.areaFilter || getNeighborhoodFocus(day)[0] || "Nashville";
+  const config =
+    mode === "swaps"
+      ? {
+          kicker: "Flexible",
+          title: "Easy pivots",
+          description: `Matrix-backed backup plays for ${focusArea}.`,
+          items: getFilteredOptions(day, "swaps")
+        }
+      : {
+          kicker: "Close by",
+          title: "What is close",
+          description: `Matrix-backed nearby ideas for ${focusArea}.`,
+          items: getFilteredOptions(day, "nearby")
+        };
+
+  els.sheetKicker.textContent = config.kicker;
+  els.sheetTitle.textContent = config.title;
+  els.sheetDescription.textContent = config.description;
+  renderStack(config.items, els.sheetList);
 }
 
 function shortDate(dateString) {
