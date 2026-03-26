@@ -9,23 +9,32 @@ const els = {
   tripNotes: document.querySelector("#trip-notes"),
   refreshButton: document.querySelector("#refresh-button"),
   heroStamps: document.querySelector("#hero-stamps"),
+  openMenu: document.querySelector("#open-menu"),
   openSwaps: document.querySelector("#open-swaps"),
   openNearby: document.querySelector("#open-nearby"),
   swapsPreview: document.querySelector("#swaps-preview"),
   nearbyPreview: document.querySelector("#nearby-preview"),
+  weatherWidget: document.querySelector("#weather-widget"),
   optionSheet: document.querySelector("#option-sheet"),
   sheetBackdrop: document.querySelector("#sheet-backdrop"),
   closeSheet: document.querySelector("#close-sheet"),
   sheetKicker: document.querySelector("#sheet-kicker"),
   sheetTitle: document.querySelector("#sheet-title"),
   sheetDescription: document.querySelector("#sheet-description"),
-  sheetList: document.querySelector("#sheet-list")
+  sheetList: document.querySelector("#sheet-list"),
+  menuDrawer: document.querySelector("#menu-drawer"),
+  menuBackdrop: document.querySelector("#menu-backdrop"),
+  closeMenu: document.querySelector("#close-menu"),
+  categoryList: document.querySelector("#category-list")
 };
 
 const templates = {
   agenda: document.querySelector("#agenda-card-template"),
   stack: document.querySelector("#stack-item-template"),
-  stamp: document.querySelector("#stamp-template")
+  stamp: document.querySelector("#stamp-template"),
+  weatherDay: document.querySelector("#weather-day-template"),
+  category: document.querySelector("#category-template"),
+  categoryItem: document.querySelector("#category-item-template")
 };
 
 const state = {
@@ -33,7 +42,9 @@ const state = {
   selectedDayId: null,
   sourceLabel: "Loading...",
   activeSheetMode: null,
-  areaFilter: null
+  areaFilter: null,
+  weather: null,
+  menuOpen: false
 };
 
 boot().catch((error) => {
@@ -48,6 +59,7 @@ async function boot() {
 
   state.trip = await loadTripData();
   state.selectedDayId = state.trip.days[0]?.id ?? null;
+  state.weather = await loadWeather();
 
   render();
 }
@@ -63,6 +75,9 @@ function attachEvents() {
   els.openNearby.addEventListener("click", () => openOptionSheet("nearby"));
   els.closeSheet.addEventListener("click", closeOptionSheet);
   els.sheetBackdrop.addEventListener("click", closeOptionSheet);
+  els.openMenu.addEventListener("click", openMenuDrawer);
+  els.closeMenu.addEventListener("click", closeMenuDrawer);
+  els.menuBackdrop.addEventListener("click", closeMenuDrawer);
 }
 
 async function loadTripData({ bustCache = false } = {}) {
@@ -206,7 +221,7 @@ function buildTripFromItinerarySheet(config, itineraryRawCsv, matrixRawCsv) {
       continue;
     }
 
-    if (!currentDay) {
+  if (!currentDay) {
       continue;
     }
 
@@ -239,7 +254,7 @@ function buildTripFromItinerarySheet(config, itineraryRawCsv, matrixRawCsv) {
       continue;
     }
 
-    const area = inferArea([second, third, fourth].join(" "));
+    const area = inferArea([second, third, fourth].join(" "), second);
     const locationQuery = third || `${second || "Nashville"} ${area}`;
 
     currentDay.agenda.push({
@@ -267,6 +282,7 @@ function buildTripFromItinerarySheet(config, itineraryRawCsv, matrixRawCsv) {
     tripName: config.tripName || itineraryRows[0]?.[0] || "Nashville Trip",
     subtitle: config.subtitle || "Live itinerary synced from Google Sheets.",
     notes: Array.isArray(config.notes) ? config.notes : [],
+    categories: guideData?.categories || [],
     days
   };
 }
@@ -285,6 +301,11 @@ function buildTripFromMatrixSheet(config, rawCsv) {
       ...(Array.isArray(config.notes) ? config.notes : []),
       stayUrl ? `Stay link: ${stayUrl}` : ""
     ].filter(Boolean),
+    categories: [
+      { name: "Things to do", items: thingsToDo.map((item) => toCategoryItem(item, "Things to do")) },
+      { name: "Food & drink", items: foodAndDrink.map((item) => toCategoryItem(item, item.extra ? "Food + GF" : "Food/drink")) },
+      { name: "Shopping", items: shopping.map((item) => toCategoryItem(item, "Shopping")) }
+    ],
     days: [
       {
         id: "live-guide",
@@ -322,6 +343,17 @@ function buildTripFromMatrixSheet(config, rawCsv) {
   };
 }
 
+function toCategoryItem(item, category) {
+  return {
+    title: item.title,
+    category,
+    area: guessArea(item),
+    notes: [item.notes, item.extra ? `GF: ${item.extra}` : "", item.pricing || ""].filter(Boolean).join(" • "),
+    reviewQuery: `${item.title} Nashville reviews`,
+    directionsQuery: `${item.title} Nashville`
+  };
+}
+
 function addRowsToDayMap(dayMap, rows, key) {
   for (const row of rows) {
     if (!row.dayId || !dayMap.has(row.dayId)) {
@@ -349,6 +381,24 @@ async function fetchText(url, bustCache) {
   }
 
   return response.text();
+}
+
+async function loadWeather() {
+  try {
+    const response = await fetch(
+      "https://api.open-meteo.com/v1/forecast?latitude=36.1627&longitude=-86.7816&daily=weather_code,temperature_2m_max,temperature_2m_min&temperature_unit=fahrenheit&timezone=America%2FChicago&forecast_days=3",
+      { cache: "no-store" }
+    );
+
+    if (!response.ok) {
+      throw new Error("Weather request failed");
+    }
+
+    return response.json();
+  } catch (error) {
+    console.warn("Weather unavailable", error);
+    return null;
+  }
 }
 
 function parseCsv(raw) {
@@ -479,11 +529,14 @@ function guessArea(item) {
   return "Nashville";
 }
 
-function inferArea(text) {
-  const value = (text || "").toLowerCase();
+function inferArea(text, title = "") {
+  const value = `${text || ""} ${title || ""}`.toLowerCase();
 
   if (value.includes("12 south")) {
     return "12 South";
+  }
+  if (value.includes("whiskey row") || value.includes("w main") || value.includes("slugger") || value.includes("louisville")) {
+    return "Louisville";
   }
   if (value.includes("germantown")) {
     return "Germantown";
@@ -682,7 +735,9 @@ function render() {
   renderAgenda(day.agenda);
   renderStamps(day);
   renderLaunchers(day);
+  renderWeather();
   renderNotes(state.trip.notes);
+  renderCategories();
 
   if (state.activeSheetMode) {
     renderOptionSheet(day, state.activeSheetMode);
@@ -735,6 +790,25 @@ function renderLaunchers(day) {
   els.openNearby.setAttribute("aria-label", `Open nearby ideas for ${secondaryArea}`);
   els.swapsPreview.textContent = buildLauncherDescription(primaryArea, "pivots", getFilteredOptions(day, "swaps"));
   els.nearbyPreview.textContent = buildLauncherDescription(secondaryArea, "nearby", getFilteredOptions(day, "nearby"));
+}
+
+function renderWeather() {
+  els.weatherWidget.innerHTML = "";
+
+  if (!state.weather?.daily?.time?.length) {
+    els.weatherWidget.innerHTML = "<p class=\"weather-loading\">Weather unavailable.</p>";
+    return;
+  }
+
+  state.weather.daily.time.forEach((date, index) => {
+    const node = templates.weatherDay.content.firstElementChild.cloneNode(true);
+    node.querySelector(".weather-icon").textContent = weatherCodeToIcon(state.weather.daily.weather_code[index]);
+    node.querySelector(".weather-day-label").textContent = new Date(`${date}T12:00:00`).toLocaleDateString([], {
+      weekday: "short"
+    });
+    node.querySelector(".weather-temp").textContent = `${Math.round(state.weather.daily.temperature_2m_max[index])}° / ${Math.round(state.weather.daily.temperature_2m_min[index])}°`;
+    els.weatherWidget.append(node);
+  });
 }
 
 function buildLauncherDescription(area, mode, items) {
@@ -807,6 +881,34 @@ function renderNotes(notes) {
   els.tripNotes.append(list);
 }
 
+function renderCategories() {
+  const categories = state.trip.categories || [];
+  els.categoryList.innerHTML = "";
+
+  for (const category of categories) {
+    const node = templates.category.content.firstElementChild.cloneNode(true);
+    const toggle = node.querySelector(".category-toggle");
+    const itemsWrap = node.querySelector(".category-items");
+    node.querySelector(".category-name").textContent = category.name;
+    node.querySelector(".category-count").textContent = `${category.items.length} places`;
+
+    for (const item of category.items) {
+      const itemNode = templates.categoryItem.content.firstElementChild.cloneNode(true);
+      itemNode.querySelector(".category-item-title").textContent = item.title;
+      itemNode.querySelector(".category-item-area").textContent = item.area;
+      itemNode.querySelector(".category-item-notes").textContent = item.notes || "No notes yet.";
+      buildActions(itemNode.querySelector(".action-row"), item);
+      itemsWrap.append(itemNode);
+    }
+
+    toggle.addEventListener("click", () => {
+      itemsWrap.hidden = !itemsWrap.hidden;
+    });
+    itemsWrap.hidden = true;
+    els.categoryList.append(node);
+  }
+}
+
 function renderStamps(day) {
   const areas = getNeighborhoodFocus(day);
   els.heroStamps.innerHTML = "";
@@ -856,6 +958,18 @@ function renderStack(items, target) {
   }
 }
 
+function openMenuDrawer() {
+  state.menuOpen = true;
+  els.menuDrawer.hidden = false;
+  els.menuDrawer.setAttribute("aria-hidden", "false");
+}
+
+function closeMenuDrawer() {
+  state.menuOpen = false;
+  els.menuDrawer.hidden = true;
+  els.menuDrawer.setAttribute("aria-hidden", "true");
+}
+
 function openOptionSheet(mode) {
   state.activeSheetMode = mode;
   const day = state.trip.days.find((entry) => entry.id === state.selectedDayId) || state.trip.days[0];
@@ -891,6 +1005,34 @@ function renderOptionSheet(day, mode) {
   els.sheetTitle.textContent = config.title;
   els.sheetDescription.textContent = config.description;
   renderStack(config.items, els.sheetList);
+}
+
+function weatherCodeToIcon(code) {
+  const weatherCode = Number(code);
+
+  if ([0].includes(weatherCode)) {
+    return "☀️";
+  }
+  if ([1, 2].includes(weatherCode)) {
+    return "⛅";
+  }
+  if ([3].includes(weatherCode)) {
+    return "☁️";
+  }
+  if ([45, 48].includes(weatherCode)) {
+    return "🌫️";
+  }
+  if ([51, 53, 55, 61, 63, 65, 80, 81, 82].includes(weatherCode)) {
+    return "🌧️";
+  }
+  if ([71, 73, 75, 77, 85, 86].includes(weatherCode)) {
+    return "❄️";
+  }
+  if ([95, 96, 99].includes(weatherCode)) {
+    return "⛈️";
+  }
+
+  return "🌤️";
 }
 
 function shortDate(dateString) {

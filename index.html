@@ -29,17 +29,35 @@
             <p id="trip-subtitle" class="hero-copy">Agenda, pivots, and nearby options in one place.</p>
             <div id="hero-stamps" class="hero-stamps"></div>
           </div>
-          <button id="refresh-button" class="ghost-button" type="button">Refresh</button>
+          <div class="hero-actions">
+            <button id="refresh-button" class="ghost-button" type="button">Refresh</button>
+            <button id="open-menu" class="ghost-button icon-button" type="button" aria-label="Open menu">
+              <span class="burger-line"></span>
+              <span class="burger-line"></span>
+              <span class="burger-line"></span>
+            </button>
+          </div>
         </div>
-        <section class="status-bar">
-          <div>
-            <span class="status-label">Data source</span>
-            <strong id="data-source">Loading...</strong>
-          </div>
-          <div>
-            <span class="status-label">Last update</span>
-            <strong id="last-updated">Checking...</strong>
-          </div>
+        <section class="hero-lower">
+          <section class="status-bar">
+            <div>
+              <span class="status-label">Data source</span>
+              <strong id="data-source">Loading...</strong>
+            </div>
+            <div>
+              <span class="status-label">Last update</span>
+              <strong id="last-updated">Checking...</strong>
+            </div>
+          </section>
+          <aside class="weather-panel" aria-labelledby="weather-title">
+            <div class="weather-heading">
+              <span class="status-label">Forecast</span>
+              <strong id="weather-title">Nashville</strong>
+            </div>
+            <div id="weather-widget" class="weather-widget">
+              <p class="weather-loading">Loading weather...</p>
+            </div>
+          </aside>
         </section>
       </header>
 
@@ -96,6 +114,20 @@
       </div>
     </section>
 
+    <section id="menu-drawer" class="menu-drawer" hidden aria-hidden="true">
+      <div id="menu-backdrop" class="menu-backdrop"></div>
+      <aside class="menu-panel" role="dialog" aria-modal="true" aria-labelledby="menu-title">
+        <div class="menu-header">
+          <div>
+            <p class="eyebrow">Trip Guide</p>
+            <h2 id="menu-title">Browse categories</h2>
+          </div>
+          <button id="close-menu" class="ghost-button sheet-close" type="button">Close</button>
+        </div>
+        <div id="category-list" class="category-list"></div>
+      </aside>
+    </section>
+
     <template id="agenda-card-template">
       <article class="agenda-card">
         <div class="agenda-time"></div>
@@ -125,6 +157,35 @@
 
     <template id="stamp-template">
       <button class="stamp" type="button"></button>
+    </template>
+
+    <template id="weather-day-template">
+      <article class="weather-day">
+        <div class="weather-icon" aria-hidden="true"></div>
+        <strong class="weather-day-label"></strong>
+        <span class="weather-temp"></span>
+      </article>
+    </template>
+
+    <template id="category-template">
+      <section class="category-block">
+        <button class="category-toggle" type="button">
+          <span class="category-name"></span>
+          <span class="category-count"></span>
+        </button>
+        <div class="category-items"></div>
+      </section>
+    </template>
+
+    <template id="category-item-template">
+      <article class="category-item">
+        <div class="category-item-top">
+          <h3 class="category-item-title"></h3>
+          <span class="badge category-item-area"></span>
+        </div>
+        <p class="category-item-notes"></p>
+        <div class="action-row"></div>
+      </article>
     </template>
 
     <script type="module" src="./src/app.js"></script>
