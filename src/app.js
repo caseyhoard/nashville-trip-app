@@ -481,8 +481,10 @@ function parseCsvRows(raw) {
     const next = raw[i + 1];
 
     if (char === "\"") {
+      current += char;
+
       if (quoted && next === "\"") {
-        current += "\"";
+        current += next;
         i += 1;
       } else {
         quoted = !quoted;

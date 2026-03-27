@@ -1,4 +1,4 @@
-const CACHE_NAME = "nashville-trip-v3";
+const CACHE_NAME = "nashville-trip-v4";
 const ASSETS = [
   "./",
   "./index.html",
@@ -24,6 +24,29 @@ self.addEventListener("activate", (event) => {
 
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") {
+    return;
+  }
+
+  const requestUrl = new URL(event.request.url);
+  const isLocalAsset =
+    requestUrl.origin === self.location.origin &&
+    (requestUrl.pathname.endsWith("/") ||
+      requestUrl.pathname.endsWith(".html") ||
+      requestUrl.pathname.endsWith(".css") ||
+      requestUrl.pathname.endsWith(".js") ||
+      requestUrl.pathname.endsWith(".json") ||
+      requestUrl.pathname.endsWith(".webmanifest"));
+
+  if (isLocalAsset) {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          const clonedResponse = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clonedResponse));
+          return response;
+        })
+        .catch(() => caches.match(event.request))
+    );
     return;
   }
 

@@ -387,6 +387,19 @@ h3 {
   margin-top: 14px;
 }
 
+.sheet-filters .stamp {
+  background: rgba(195, 94, 55, 0.08);
+  border-color: rgba(143, 51, 23, 0.18);
+  color: var(--accent-deep);
+  font-weight: 700;
+}
+
+.sheet-filters .stamp.is-active {
+  background: linear-gradient(135deg, rgba(155, 47, 25, 0.96), rgba(202, 91, 45, 0.92));
+  border-color: rgba(155, 47, 25, 0.92);
+  color: #fff8ef;
+}
+
 .agenda-card,
 .stack-item {
   background: var(--panel-strong);
