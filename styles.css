@@ -593,6 +593,52 @@ h3 {
   margin-top: 18px;
 }
 
+.category-nav-button,
+.category-back-button {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: rgba(255, 251, 244, 0.9);
+  color: var(--text);
+  padding: 15px 16px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.category-nav-button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.category-nav-name {
+  font-weight: 800;
+}
+
+.category-nav-count,
+.category-section-heading span {
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.category-back-button {
+  font-weight: 700;
+}
+
+.category-section-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 2px 2px 0;
+}
+
+.category-items-flat {
+  display: grid;
+  gap: 12px;
+}
+
 .category-block {
   border: 1px solid var(--line);
   border-radius: 18px;

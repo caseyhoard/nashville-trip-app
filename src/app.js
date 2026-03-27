@@ -43,7 +43,8 @@ const state = {
   activeSheetMode: null,
   areaFilter: null,
   weather: null,
-  menuOpen: false
+  menuOpen: false,
+  selectedMenuCategory: null
 };
 
 boot().catch((error) => {
@@ -1078,29 +1079,64 @@ function renderCategories() {
   const categories = state.trip.categories || [];
   els.categoryList.innerHTML = "";
 
-  for (const category of categories) {
-    const node = templates.category.content.firstElementChild.cloneNode(true);
-    const toggle = node.querySelector(".category-toggle");
-    const itemsWrap = node.querySelector(".category-items");
-    node.querySelector(".category-name").textContent = category.name;
-    node.querySelector(".category-count").textContent = `${category.items.length} places`;
-
-    for (const item of category.items) {
-      const itemNode = templates.categoryItem.content.firstElementChild.cloneNode(true);
-      itemNode.querySelector(".category-item-title").textContent = item.title;
-      itemNode.querySelector(".category-item-area").textContent = item.area;
-      itemNode.querySelector(".category-item-address").textContent = item.address || item.neighborhood || "Address not listed";
-      itemNode.querySelector(".category-item-notes").textContent = item.notes || "No notes yet.";
-      buildActions(itemNode.querySelector(".action-row"), item);
-      itemsWrap.append(itemNode);
+  if (!state.selectedMenuCategory) {
+    for (const category of categories.filter((entry) => entry.name !== "Hotel")) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "category-nav-button";
+      button.innerHTML = `
+        <span class="category-nav-name">${formatCategoryLabel(category.name)}</span>
+        <span class="category-nav-count">${category.items.length} places</span>
+      `;
+      button.addEventListener("click", () => {
+        state.selectedMenuCategory = category.name;
+        renderCategories();
+      });
+      els.categoryList.append(button);
     }
 
-    toggle.addEventListener("click", () => {
-      itemsWrap.hidden = !itemsWrap.hidden;
-    });
-    itemsWrap.hidden = true;
-    els.categoryList.append(node);
+    return;
   }
+
+  const activeCategory = categories.find((entry) => entry.name === state.selectedMenuCategory);
+  if (!activeCategory) {
+    state.selectedMenuCategory = null;
+    renderCategories();
+    return;
+  }
+
+  const backButton = document.createElement("button");
+  backButton.type = "button";
+  backButton.className = "category-back-button";
+  backButton.textContent = "Back to categories";
+  backButton.addEventListener("click", () => {
+    state.selectedMenuCategory = null;
+    renderCategories();
+  });
+  els.categoryList.append(backButton);
+
+  const heading = document.createElement("div");
+  heading.className = "category-section-heading";
+  heading.innerHTML = `
+    <strong>${formatCategoryLabel(activeCategory.name)}</strong>
+    <span>${activeCategory.items.length} places</span>
+  `;
+  els.categoryList.append(heading);
+
+  const itemsWrap = document.createElement("div");
+  itemsWrap.className = "category-items-flat";
+
+  for (const item of activeCategory.items) {
+    const itemNode = templates.categoryItem.content.firstElementChild.cloneNode(true);
+    itemNode.querySelector(".category-item-title").textContent = item.title;
+    itemNode.querySelector(".category-item-area").textContent = item.area;
+    itemNode.querySelector(".category-item-address").textContent = item.address || item.neighborhood || "Address not listed";
+    itemNode.querySelector(".category-item-notes").textContent = item.notes || "No notes yet.";
+    buildActions(itemNode.querySelector(".action-row"), item);
+    itemsWrap.append(itemNode);
+  }
+
+  els.categoryList.append(itemsWrap);
 }
 
 function getFilteredOptions(day, key, areaFilter = state.areaFilter) {
@@ -1109,12 +1145,7 @@ function getFilteredOptions(day, key, areaFilter = state.areaFilter) {
     return items;
   }
 
-  const exact = items.filter((item) => item.area === areaFilter);
-  if (exact.length) {
-    return exact;
-  }
-
-  return items;
+  return items.filter((item) => item.area === areaFilter);
 }
 
 function renderStack(items, target) {
@@ -1138,8 +1169,10 @@ function renderStack(items, target) {
 
 function openMenuDrawer() {
   state.menuOpen = true;
+  state.selectedMenuCategory = null;
   els.menuDrawer.hidden = false;
   els.menuDrawer.setAttribute("aria-hidden", "false");
+  renderCategories();
 }
 
 function closeMenuDrawer() {
@@ -1164,8 +1197,9 @@ function closeOptionSheet() {
 }
 
 function renderOptionSheet(day, mode) {
-  const focusArea = state.areaFilter || getNeighborhoodFocus(day)[0] || "Nashville";
   const availableAreas = getAvailableFilterAreas(day, mode);
+  const defaultArea = availableAreas[0] || getNeighborhoodFocus(day)[0] || "Nashville";
+  const focusArea = state.areaFilter || defaultArea;
   const config =
     mode === "swaps"
       ? {
@@ -1215,6 +1249,19 @@ function renderSheetFilters(areas, day, mode) {
     });
     els.sheetFilters.append(button);
   }
+}
+
+function formatCategoryLabel(category) {
+  const labels = {
+    Activity: "Activities",
+    Restaurant: "Restaurants",
+    Distillery: "Distilleries",
+    Brewery: "Breweries",
+    Bar: "Bars",
+    Hotel: "Hotels"
+  };
+
+  return labels[category] || category;
 }
 
 function weatherCodeToIcon(code) {
