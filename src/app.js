@@ -1183,8 +1183,8 @@ function closeMenuDrawer() {
 
 function openOptionSheet(mode) {
   state.activeSheetMode = mode;
-  state.areaFilter = null;
   const day = state.trip.days.find((entry) => entry.id === state.selectedDayId) || state.trip.days[0];
+  state.areaFilter = getDefaultFocusArea(day, mode, getAvailableFilterAreas(day, mode));
   renderOptionSheet(day, mode);
   els.optionSheet.hidden = false;
   els.optionSheet.setAttribute("aria-hidden", "false");
@@ -1206,13 +1206,13 @@ function renderOptionSheet(day, mode) {
           kicker: "Flexible",
           title: "Easy pivots",
           description: `Matrix-backed backup plays for ${focusArea}.`,
-          items: getFilteredOptions(day, "swaps")
+          items: getFilteredOptions(day, "swaps", focusArea)
         }
       : {
           kicker: "Close by",
           title: "What is close",
           description: `Matrix-backed nearby ideas for ${focusArea}.`,
-          items: getFilteredOptions(day, "nearby")
+          items: getFilteredOptions(day, "nearby", focusArea)
         };
 
   els.sheetKicker.textContent = config.kicker;
@@ -1228,6 +1228,43 @@ function getAvailableFilterAreas(day, mode) {
   const focusAreas = getNeighborhoodFocus(day);
 
   return Array.from(new Set([...focusAreas, ...listAreas])).filter((area) => area && area !== "Nashville");
+}
+
+function getDefaultFocusArea(day, mode, availableAreas) {
+  if (!availableAreas.length) {
+    return null;
+  }
+
+  if (mode === "nearby") {
+    const laterAnchor = findLaterNeighborhoodAnchor(day, availableAreas);
+    if (laterAnchor) {
+      return laterAnchor;
+    }
+  }
+
+  return availableAreas[0];
+}
+
+function findLaterNeighborhoodAnchor(day, availableAreas) {
+  const preferredCategories = new Set(["Stay", "Food", "Drinks", "Event", "Explore"]);
+
+  for (const item of [...(day.agenda || [])].reverse()) {
+    if (!item?.area || !availableAreas.includes(item.area)) {
+      continue;
+    }
+
+    if (preferredCategories.has(item.category)) {
+      return item.area;
+    }
+  }
+
+  for (const item of [...(day.agenda || [])].reverse()) {
+    if (item?.area && availableAreas.includes(item.area) && item.category !== "Travel") {
+      return item.area;
+    }
+  }
+
+  return null;
 }
 
 function renderSheetFilters(areas, day, mode) {
