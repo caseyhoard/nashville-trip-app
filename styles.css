@@ -663,6 +663,21 @@ h3 {
     flex-direction: column;
   }
 
+  .hero {
+    padding-top: 58px;
+  }
+
+  .hero-actions {
+    width: auto;
+  }
+
+  .icon-button {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    z-index: 2;
+  }
+
   .hero-lower {
     grid-template-columns: 1fr;
   }
