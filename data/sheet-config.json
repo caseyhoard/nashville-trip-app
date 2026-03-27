@@ -2,7 +2,7 @@
   "tripName": "Nashville Spring Break",
   "subtitle": "Live itinerary and planning sheet synced from Google Sheets.",
   "itineraryCsvUrl": "https://docs.google.com/spreadsheets/d/e/2PACX-1vRrt_wi2qLB0pM6Wm1xYQtYn2oiUQQ0QIJFxFmVIvMw5JV8EQKH0BYef_Wtdolxb8CeVciErtF8Uzax/pub?gid=640846647&single=true&output=csv",
-  "matrixCsvUrl": "https://docs.google.com/spreadsheets/d/e/2PACX-1vRrt_wi2qLB0pM6Wm1xYQtYn2oiUQQ0QIJFxFmVIvMw5JV8EQKH0BYef_Wtdolxb8CeVciErtF8Uzax/pub?output=csv",
+  "matrixCsvUrl": "https://docs.google.com/spreadsheets/d/e/2PACX-1vRrt_wi2qLB0pM6Wm1xYQtYn2oiUQQ0QIJFxFmVIvMw5JV8EQKH0BYef_Wtdolxb8CeVciErtF8Uzax/pub?gid=1524149483&single=true&output=csv",
   "notes": [
     "This version is reading from your published planning matrix.",
     "This version is also reading your itinerary tab for the real day-by-day agenda."

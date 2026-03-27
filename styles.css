@@ -168,13 +168,6 @@ h3 {
   font-size: 1rem;
 }
 
-.hero-stamps {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 14px;
-}
-
 .stamp {
   padding: 7px 11px;
   border-radius: 999px;
@@ -385,6 +378,13 @@ h3 {
   display: grid;
   gap: 14px;
   margin-top: 18px;
+}
+
+.sheet-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
 }
 
 .agenda-card,
@@ -635,6 +635,14 @@ h3 {
   margin-top: 8px;
   color: var(--muted);
   line-height: 1.45;
+}
+
+.category-item-address {
+  margin-top: 6px;
+  color: var(--text);
+  font-size: 0.92rem;
+  font-weight: 600;
+  line-height: 1.4;
 }
 
 @media (max-width: 780px) {

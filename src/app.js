@@ -8,7 +8,6 @@ const els = {
   currentAgenda: document.querySelector("#current-agenda"),
   tripNotes: document.querySelector("#trip-notes"),
   refreshButton: document.querySelector("#refresh-button"),
-  heroStamps: document.querySelector("#hero-stamps"),
   openMenu: document.querySelector("#open-menu"),
   openSwaps: document.querySelector("#open-swaps"),
   openNearby: document.querySelector("#open-nearby"),
@@ -21,6 +20,7 @@ const els = {
   sheetKicker: document.querySelector("#sheet-kicker"),
   sheetTitle: document.querySelector("#sheet-title"),
   sheetDescription: document.querySelector("#sheet-description"),
+  sheetFilters: document.querySelector("#sheet-filters"),
   sheetList: document.querySelector("#sheet-list"),
   menuDrawer: document.querySelector("#menu-drawer"),
   menuBackdrop: document.querySelector("#menu-backdrop"),
@@ -31,7 +31,6 @@ const els = {
 const templates = {
   agenda: document.querySelector("#agenda-card-template"),
   stack: document.querySelector("#stack-item-template"),
-  stamp: document.querySelector("#stamp-template"),
   weatherDay: document.querySelector("#weather-day-template"),
   category: document.querySelector("#category-template"),
   categoryItem: document.querySelector("#category-item-template")
@@ -195,6 +194,9 @@ function buildTripFromItinerarySheet(config, itineraryRawCsv, matrixRawCsv) {
   const itineraryRows = parseCsvRows(itineraryRawCsv);
   const days = [];
   let currentDay = null;
+  const guideData = matrixRawCsv ? buildTripFromMatrixSheet(config, matrixRawCsv) : null;
+  const matrixItems = guideData?.matrixItems || [];
+  const matrixLookup = buildMatrixLookup(matrixItems);
 
   for (const row of itineraryRows) {
     const first = row[0] || "";
@@ -254,22 +256,22 @@ function buildTripFromItinerarySheet(config, itineraryRawCsv, matrixRawCsv) {
       continue;
     }
 
-    const area = inferArea([second, third, fourth].join(" "), second);
-    const locationQuery = third || `${second || "Nashville"} ${area}`;
+    const matrixMatch = findMatrixMatch(matrixLookup, second, third, fourth);
+    const area = matrixMatch?.area || inferArea([second, third, fourth].join(" "), second);
+    const locationQuery = matrixMatch?.address || third || `${second || "Nashville"} ${area}`;
 
     currentDay.agenda.push({
       time: first || "Anytime",
       title: second || "Untitled stop",
       category: inferCategory(second, third, fourth),
       area,
-      placeName: second || "Nashville",
+      placeName: matrixMatch?.title || second || "Nashville",
       notes: [third, fourth].filter(Boolean).join(" • "),
-      reviewQuery: `${second || third || "Nashville"} ${area} reviews`,
+      reviewQuery: matrixMatch?.reviewQuery || `${second || third || "Nashville"} ${area} reviews`,
       directionsQuery: locationQuery
     });
   }
 
-  const guideData = matrixRawCsv ? buildTripFromMatrixSheet(config, matrixRawCsv) : null;
   const swapPool = guideData?.days[0]?.swaps || [];
   const nearbyPool = guideData?.days[0]?.nearby || [];
 
@@ -288,7 +290,16 @@ function buildTripFromItinerarySheet(config, itineraryRawCsv, matrixRawCsv) {
 }
 
 function buildTripFromMatrixSheet(config, rawCsv) {
-  const rows = parseCsvRows(rawCsv);
+  const rows = parseCsv(rawCsv);
+
+  if (rows[0]?.NAME) {
+    return buildTripFromStructuredMatrix(config, rows);
+  }
+
+  return buildTripFromLegacyMatrix(config, parseCsvRows(rawCsv));
+}
+
+function buildTripFromLegacyMatrix(config, rows) {
   const thingsToDo = collectMatrixSection(rows, 2, 0, "THINGS TO DO:", "Place", ["Place", "Notes", "Pricing"]);
   const foodAndDrink = collectMatrixSection(rows, 2, 5, "FOOD/DRINK:", "Place", ["Place", "Notes", "GF Stuff?"]);
   const shopping = collectMatrixSection(rows, 22, 0, "SHOPPING:", "Place", ["Place", "Notes"]);
@@ -306,6 +317,7 @@ function buildTripFromMatrixSheet(config, rawCsv) {
       { name: "Food & drink", items: foodAndDrink.map((item) => toCategoryItem(item, item.extra ? "Food + GF" : "Food/drink")) },
       { name: "Shopping", items: shopping.map((item) => toCategoryItem(item, "Shopping")) }
     ],
+    matrixItems: [],
     days: [
       {
         id: "live-guide",
@@ -338,6 +350,45 @@ function buildTripFromMatrixSheet(config, rawCsv) {
           reviewQuery: `${item.title} Nashville reviews`,
           directionsQuery: `${item.title} Nashville`
         }))
+      }
+    ]
+  };
+}
+
+function buildTripFromStructuredMatrix(config, rows) {
+  const matrixItems = rows
+    .filter((row) => row.NAME)
+    .map((row) => createMatrixItem(row));
+
+  const categories = Array.from(groupMatrixItems(matrixItems, (item) => item.category).entries())
+    .map(([name, items]) => ({
+      name,
+      items: items.sort((left, right) => left.title.localeCompare(right.title))
+    }))
+    .sort((left, right) => compareCategoryNames(left.name, right.name));
+
+  const swaps = matrixItems.filter((item) => isSwapCandidate(item));
+  const nearby = matrixItems.filter((item) => isNearbyCandidate(item));
+  const hotel = matrixItems.find((item) => item.category === "Hotel");
+
+  return {
+    tripName: config.tripName || "Nashville Trip",
+    subtitle: config.subtitle || "Live planning sheet synced from Google Sheets.",
+    notes: [
+      ...(Array.isArray(config.notes) ? config.notes : []),
+      hotel?.address ? `Stay: ${hotel.title} • ${hotel.address}` : ""
+    ].filter(Boolean),
+    categories,
+    matrixItems,
+    days: [
+      {
+        id: "live-guide",
+        label: "Guide",
+        date: "",
+        summary: "Live planning matrix with attractions, food picks, shopping, and stay info.",
+        agenda: matrixItems.filter((item) => item.category !== "Hotel"),
+        swaps,
+        nearby
       }
     ]
   };
@@ -496,6 +547,147 @@ function collectMatrixSection(rows, headerRowIndex, startColumn, sectionLabel, p
   }
 
   return items;
+}
+
+function createMatrixItem(row) {
+  const title = (row.NAME || "").trim();
+  const address = (row.ADDRESS || "").trim();
+  const neighborhood = (row.NEIGHBORHOOD || "").trim();
+  const category = (row.CATEGORY || "Activity").trim();
+  const subcategory = (row.SUBCATEGORY || "").trim();
+  const description = (row.DESCRIPTION || "").trim();
+  const hours = (row["HOURS (CHECK BEFORE YOU GO)"] || "").trim();
+  const gf = (row["GF FRIENDLY?"] || "").trim();
+  const price = (row.PRICE || "").trim();
+  const itinerary = (row["ON ITINERARY?"] || "").trim();
+  const website = (row["WEBSITE / NOTES"] || "").trim();
+  const area = simplifyNeighborhood(neighborhood || address || title);
+  const noteParts = [subcategory, description, hours, gf ? `GF: ${gf}` : "", price ? `Price: ${price}` : "", itinerary ? `Plan: ${itinerary}` : ""];
+
+  return {
+    title,
+    category,
+    categoryLabel: subcategory ? `${category} • ${subcategory}` : category,
+    area,
+    neighborhood,
+    address,
+    placeName: title,
+    notes: noteParts.filter(Boolean).join(" • "),
+    reviewQuery: `${title} ${address || area} reviews`,
+    directionsQuery: address || `${title} ${area}`,
+    website
+  };
+}
+
+function simplifyNeighborhood(value) {
+  const text = (value || "").trim();
+
+  if (!text) {
+    return "Nashville";
+  }
+
+  const parts = text.split("/").map((part) => part.trim()).filter(Boolean);
+  const primary = parts[0] || text;
+
+  return primary
+    .replace(/\s*-\s*Whiskey Row/i, "")
+    .replace(/\s*\(SE Nashville\)/i, "")
+    .replace(/\s*\/\s*Multiple/i, "")
+    .trim();
+}
+
+function groupMatrixItems(items, getKey) {
+  const groups = new Map();
+
+  for (const item of items) {
+    const key = getKey(item);
+    if (!groups.has(key)) {
+      groups.set(key, []);
+    }
+    groups.get(key).push(item);
+  }
+
+  return groups;
+}
+
+function compareCategoryNames(left, right) {
+  const preferredOrder = ["Activity", "Restaurant", "Brewery", "Distillery", "Bar", "Hotel"];
+  const leftIndex = preferredOrder.indexOf(left);
+  const rightIndex = preferredOrder.indexOf(right);
+
+  if (leftIndex === -1 && rightIndex === -1) {
+    return left.localeCompare(right);
+  }
+  if (leftIndex === -1) {
+    return 1;
+  }
+  if (rightIndex === -1) {
+    return -1;
+  }
+
+  return leftIndex - rightIndex;
+}
+
+function isSwapCandidate(item) {
+  return ["Restaurant", "Brewery", "Distillery", "Bar"].includes(item.category);
+}
+
+function isNearbyCandidate(item) {
+  return item.category !== "Hotel";
+}
+
+function buildMatrixLookup(items) {
+  return items.map((item) => ({
+    item,
+    normalizedTitle: normalizeLookupText(item.title),
+    normalizedAddress: normalizeLookupText(item.address),
+    normalizedArea: normalizeLookupText(item.area),
+    normalizedNeighborhood: normalizeLookupText(item.neighborhood)
+  }));
+}
+
+function findMatrixMatch(lookup, title = "", details = "", notes = "") {
+  const titleText = normalizeLookupText(title);
+  const combinedText = normalizeLookupText([title, details, notes].filter(Boolean).join(" "));
+  let best = null;
+
+  for (const entry of lookup) {
+    let score = 0;
+
+    if (titleText && titleText === entry.normalizedTitle) {
+      score += 100;
+    }
+    if (titleText && titleText.includes(entry.normalizedTitle)) {
+      score += 70;
+    }
+    if (combinedText && combinedText.includes(entry.normalizedTitle)) {
+      score += 60;
+    }
+    if (entry.normalizedAddress && combinedText.includes(entry.normalizedAddress)) {
+      score += 80;
+    }
+    if (entry.normalizedNeighborhood && combinedText.includes(entry.normalizedNeighborhood)) {
+      score += 20;
+    }
+    if (entry.normalizedArea && combinedText.includes(entry.normalizedArea)) {
+      score += 10;
+    }
+
+    if (!best || score > best.score) {
+      best = { score, item: entry.item };
+    }
+  }
+
+  return best && best.score >= 60 ? best.item : null;
+}
+
+function normalizeLookupText(value) {
+  return (value || "")
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[’']/g, "")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
 }
 
 function guessArea(item) {
@@ -733,7 +925,6 @@ function render() {
   els.dayTitle.textContent = formatDayHeading(day);
   els.daySummary.textContent = day.summary || "No summary yet.";
   renderAgenda(day.agenda);
-  renderStamps(day);
   renderLaunchers(day);
   renderWeather();
   renderNotes(state.trip.notes);
@@ -783,13 +974,13 @@ function renderAgenda(items) {
 
 function renderLaunchers(day) {
   const neighborhoods = getNeighborhoodFocus(day);
-  const primaryArea = state.areaFilter || neighborhoods[0] || "Nashville";
-  const secondaryArea = state.areaFilter || neighborhoods[1] || primaryArea;
+  const primaryArea = neighborhoods[0] || "Nashville";
+  const secondaryArea = neighborhoods[1] || primaryArea;
 
   els.openSwaps.setAttribute("aria-label", `Open easy pivots for ${primaryArea}`);
   els.openNearby.setAttribute("aria-label", `Open nearby ideas for ${secondaryArea}`);
-  els.swapsPreview.textContent = buildLauncherDescription(primaryArea, "pivots", getFilteredOptions(day, "swaps"));
-  els.nearbyPreview.textContent = buildLauncherDescription(secondaryArea, "nearby", getFilteredOptions(day, "nearby"));
+  els.swapsPreview.textContent = buildLauncherDescription(primaryArea, "pivots", day.swaps || []);
+  els.nearbyPreview.textContent = buildLauncherDescription(secondaryArea, "nearby", day.nearby || []);
 }
 
 function renderWeather() {
@@ -896,6 +1087,7 @@ function renderCategories() {
       const itemNode = templates.categoryItem.content.firstElementChild.cloneNode(true);
       itemNode.querySelector(".category-item-title").textContent = item.title;
       itemNode.querySelector(".category-item-area").textContent = item.area;
+      itemNode.querySelector(".category-item-address").textContent = item.address || item.neighborhood || "Address not listed";
       itemNode.querySelector(".category-item-notes").textContent = item.notes || "No notes yet.";
       buildActions(itemNode.querySelector(".action-row"), item);
       itemsWrap.append(itemNode);
@@ -909,29 +1101,13 @@ function renderCategories() {
   }
 }
 
-function renderStamps(day) {
-  const areas = getNeighborhoodFocus(day);
-  els.heroStamps.innerHTML = "";
-
-  for (const area of areas) {
-    const button = templates.stamp.content.firstElementChild.cloneNode(true);
-    button.textContent = area;
-    button.className = `stamp${state.areaFilter === area ? " is-active" : ""}`;
-    button.addEventListener("click", () => {
-      state.areaFilter = state.areaFilter === area ? null : area;
-      render();
-    });
-    els.heroStamps.append(button);
-  }
-}
-
-function getFilteredOptions(day, key) {
+function getFilteredOptions(day, key, areaFilter = state.areaFilter) {
   const items = day[key] || [];
-  if (!state.areaFilter) {
+  if (!areaFilter) {
     return items;
   }
 
-  const exact = items.filter((item) => item.area === state.areaFilter);
+  const exact = items.filter((item) => item.area === areaFilter);
   if (exact.length) {
     return exact;
   }
@@ -972,6 +1148,7 @@ function closeMenuDrawer() {
 
 function openOptionSheet(mode) {
   state.activeSheetMode = mode;
+  state.areaFilter = null;
   const day = state.trip.days.find((entry) => entry.id === state.selectedDayId) || state.trip.days[0];
   renderOptionSheet(day, mode);
   els.optionSheet.hidden = false;
@@ -986,6 +1163,7 @@ function closeOptionSheet() {
 
 function renderOptionSheet(day, mode) {
   const focusArea = state.areaFilter || getNeighborhoodFocus(day)[0] || "Nashville";
+  const availableAreas = getAvailableFilterAreas(day, mode);
   const config =
     mode === "swaps"
       ? {
@@ -1004,7 +1182,37 @@ function renderOptionSheet(day, mode) {
   els.sheetKicker.textContent = config.kicker;
   els.sheetTitle.textContent = config.title;
   els.sheetDescription.textContent = config.description;
+  renderSheetFilters(availableAreas, day, mode);
   renderStack(config.items, els.sheetList);
+}
+
+function getAvailableFilterAreas(day, mode) {
+  const key = mode === "swaps" ? "swaps" : "nearby";
+  const listAreas = Array.from(new Set((day[key] || []).map((item) => item.area).filter(Boolean)));
+  const focusAreas = getNeighborhoodFocus(day);
+
+  return Array.from(new Set([...focusAreas, ...listAreas])).filter((area) => area && area !== "Nashville");
+}
+
+function renderSheetFilters(areas, day, mode) {
+  els.sheetFilters.innerHTML = "";
+  els.sheetFilters.hidden = areas.length === 0;
+
+  if (!areas.length) {
+    return;
+  }
+
+  for (const area of areas) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = `stamp${state.areaFilter === area ? " is-active" : ""}`;
+    button.textContent = area;
+    button.addEventListener("click", () => {
+      state.areaFilter = state.areaFilter === area ? null : area;
+      renderOptionSheet(day, mode);
+    });
+    els.sheetFilters.append(button);
+  }
 }
 
 function weatherCodeToIcon(code) {

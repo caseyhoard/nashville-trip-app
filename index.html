@@ -27,7 +27,6 @@
           <div class="hero-copy-wrap">
             <h1>Nashville Trip</h1>
             <p id="trip-subtitle" class="hero-copy">Agenda, pivots, and nearby options in one place.</p>
-            <div id="hero-stamps" class="hero-stamps"></div>
           </div>
           <div class="hero-actions">
             <button id="refresh-button" class="ghost-button" type="button">Refresh</button>
@@ -110,6 +109,7 @@
           <button id="close-sheet" class="ghost-button sheet-close" type="button">Close</button>
         </div>
         <p id="sheet-description" class="muted sheet-description">Options for the current day.</p>
+        <div id="sheet-filters" class="sheet-filters" hidden></div>
         <div id="sheet-list" class="stack-list sheet-list"></div>
       </div>
     </section>
@@ -155,10 +155,6 @@
       </article>
     </template>
 
-    <template id="stamp-template">
-      <button class="stamp" type="button"></button>
-    </template>
-
     <template id="weather-day-template">
       <article class="weather-day">
         <div class="weather-icon" aria-hidden="true"></div>
@@ -183,6 +179,7 @@
           <h3 class="category-item-title"></h3>
           <span class="badge category-item-area"></span>
         </div>
+        <p class="category-item-address"></p>
         <p class="category-item-notes"></p>
         <div class="action-row"></div>
       </article>
